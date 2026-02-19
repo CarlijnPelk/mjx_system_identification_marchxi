@@ -22,20 +22,20 @@ from mcap_ros2.decoder import DecoderFactory
 import sys
 
 # ========== CONFIGURATION ==========
-INPUT_MCAP = "exo optimisation/data/raw/split_400_660.mcap"  # Change this to your MCAP file path
-OUTPUT_CSV = "exo optimisation/data/exo_data2_07_04.csv"  # Output CSV file
+INPUT_MCAP = "exo optimisation/data/raw/2025-11-26-11-26-comp.mcap"  # Change this to your MCAP file path
+OUTPUT_CSV = "exo optimisation/data/2025-11-26-11-26-comp.csv"  # Output CSV file
 JOINT_STATES_TOPIC = '/joint_states'
 PDO_TOPIC = '/pdo_states'
-START_TIME = None  # Start time in seconds (relative to bag start), or None
+START_TIME = 60  # Start time in seconds (relative to bag start), or None
 END_TIME = None    # End time in seconds (relative to bag start), or None
 # ===================================
 
 # Joint names in the order needed for optimization
 JOINT_NAMES = [
     'left_hip_aa', 'left_hip_fe', 'left_knee', 
-    'L_Front_Slide', 'L_Back_Slide',
+    'L_Front_Linear', 'L_Back_Linear',
     'right_hip_aa', 'right_hip_fe', 'right_knee',
-    'R_Front_Slide', 'R_Back_Slide'
+    'R_Front_Linear', 'R_Back_Linear'
 ]
 
 # Mapping from PDO axes indices to joint names
@@ -64,10 +64,10 @@ JOINT_STATES_MAPPING = {
     7: "right_hip_aa",
     8: "right_hip_fe",
     9: "right_knee",
-    10: "L_Back_Slide",      # Map to optimization names
-    11: "L_Front_Slide",     # Map to optimization names
-    12: "R_Back_Slide",      # Map to optimization names
-    13: "R_Front_Slide",     # Map to optimization names
+    10: "L_Back_Linear",      # Map to optimization names
+    11: "L_Front_Linear",     # Map to optimization names
+    12: "R_Back_Linear",      # Map to optimization names
+    13: "R_Front_Linear",     # Map to optimization names
 }
 
 

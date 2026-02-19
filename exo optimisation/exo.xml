@@ -1,0 +1,496 @@
+<!-- This file consist the xml model of the exoskeleton of M10. 
+ The structure is the following:
+  -->
+
+<mujoco model="exoskeleton">
+    <compiler meshdir="assets" angle="degree" autolimits="true"/>
+    <size nuser_actuator="1" nuser_sensor="8" nuser_geom="1"/>
+    <option timestep="0.02" iterations="5" ls_iterations="10" gravity="0 0 -9.81">
+        <flag multiccd="enable"/>
+    </option>
+
+    <visual>
+        <headlight diffuse="0.8 0.8 0.8" ambient="0.4 0.4 0.4" specular="0 0 0"/>
+        <map force="0.1" zfar="10"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+        <global offwidth="800" offheight="800"/>
+        <quality shadowsize="0"/>
+    </visual>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+        <texture type="2d" name="groundplane" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="300" height="300"/>
+        <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"/>
+
+        <material name="march_grey" rgba=".87 .89 .91 1"/>
+        <material name="collision" rgba="1 0 0 0.5"/>
+
+        <mesh name="backpack"    scale="-1 1 1"   file="Backplate.obj"/>
+        <mesh name="L_Ankle"     scale="-1 -1 1"   file="L_Ankle.obj"/>
+        <mesh name="L_Hip"       scale="-1 -1 1"   file="L_Hip.obj"/>
+        <mesh name="L_UpperLeg"  scale="-1 -1 1"   file="L_UpperLeg.obj"/>
+        <mesh name="L_LowerLeg"  scale="-1 -1 1"   file="L_LowerLeg.obj"/>
+        <mesh name="L_Sole"      scale="-1 -1 1"   file="L_Foot.obj"/>
+
+        <mesh name="R_Ankle"     scale="-1 1 1"    file="L_Ankle.obj"/>
+        <mesh name="R_Hip"       scale="-1 1 1"    file="L_Hip.obj"/>
+        <mesh name="R_UpperLeg"  scale="-1 1 1"    file="L_UpperLeg.obj"/>
+        <mesh name="R_LowerLeg"  scale="-1 1 1"    file="L_LowerLeg.obj"/>
+        <mesh name="R_Sole"      scale="-1 1 1"    file="L_Foot.obj"/>
+    </asset>
+
+
+
+    <default>
+        <site group="4"/>
+        <motor ctrlrange="-1 1" ctrllimited="true" />
+        <geom contype="0" conaffinity="0" condim="1" solref="0.005 1" />
+
+        <!-- COLLISION CLASSES -->
+        <default class="backpack_collision">
+            <geom type="box" group="3" contype="2" conaffinity="1" condim="3" rgba="1 1 1 0.5" material="march_grey"/>
+        </default>
+
+        <default class="L_collision">
+            <geom type="capsule" group="3" contype="2" conaffinity="1" condim="3" rgba="1 1 1 0.5" material="march_grey"/>
+        </default>
+
+        <default class="R_collision">
+            <geom type="capsule" group="3" contype="2" conaffinity="1" condim="3" rgba="1 1 1 0.5" material="march_grey"/>
+        </default>
+
+        <default class ="foot_collision">
+            <geom type="sphere" size="0.01" group="3" contype="4" conaffinity="1" condim="4" friction="1 0.005" rgba="1 0 1 0.5"/>
+        </default>
+
+        <!-- JOINT CLASSES  #TODO: determine appropriate damping, armature, frictionloss and stiffness values -->
+        <default class="hip_aa">
+            <joint damping="8.46" armature="8.47" frictionloss="10" stiffness="0"/>
+            <motor ctrlrange="-1 1" ctrllimited="true" gear="100"/>
+        </default>
+
+        <default class="hip_fe">
+            <joint damping="5.09" armature="6.74" frictionloss="10"/>
+            <motor ctrlrange="-2.4 2.4" ctrllimited="true" gear="100"/>
+        </default>
+
+        <default class="knee">
+            <joint damping="4.45" armature="6.17" frictionloss="10"/>
+            <motor ctrlrange="-2.4 2.4" ctrllimited="true" gear="100"/>
+        </default>
+
+        <default class="ankle_linear">
+            <joint damping="7.93" armature="7.93" frictionloss="3" stiffness="0"/>
+            <motor ctrlrange="-3 3" ctrllimited="true" gear="100"/>
+        </default>
+        
+    </default>
+
+
+    <worldbody>
+        <geom name='floor' size='0 0 .05' type='plane' material='groundplane' pos='0 0 0' 
+            contype="1" conaffinity='6' condim='4' 
+            solref='0.000002 1' 
+            solimp='0.99 0.999 0.000001' 
+            friction='3 0.005 0.0001'/> <!-- #TODO adjust friction values -->
+        <light name='spotlight' mode='targetbodycom' target='backpack' diffuse='.8 .8 .8' specular='0.3 0.3 0.3' pos='0 -20 4' cutoff='10'/>
+
+        <!-- START OF THE BODY "TREE" OF THE EXO -->
+        <body name="backpack" pos="0.0 0.0 2.0"> <!-- made the backpack higher for testing, z was 1.28-->
+            <light name="top" pos="0.00000 0.00000 2.00000" mode="trackcom" />
+            <camera name="diag" pos="3.00000 -2.50000 1.00000" xyaxes="1 1 0 0 1 2" mode="track" />
+            <inertial mass="3.2184" pos="-0.00400 0 -0.01700" fullinertia="0.13140 0.04400 0.08870 -0.00000 -0.00100 0.00000" />
+            <!-- <joint type="free"/> -->
+            <geom name="backpack" type="mesh" mesh="backpack" />
+            <geom name="backpack_box" size="0.12 0.10 0.25" class="backpack_collision"/>
+            <site name="imu_backpack" size="0.01" pos="0.0 0.0 0.0" />
+
+            <!-- LEFT HIP -->
+            <body name="L_hip" pos="0.00400 0.09200 -0.20000">
+                <inertial mass="2.0526" pos="0.12400 0.17000 0.00700" fullinertia="0.11230 0.08360 0.18680 -0.08410 -0.00300 -0.00320" />
+                <joint name="left_hip_aa" axis="-1 0 0" range="-20 10" limited="true" class="hip_aa" />
+                <geom name="L_Hip" type="mesh" mesh="L_Hip" />
+                <geom name="L_Hip_capsule" size="0.10 0.12 0.08" pos="0.08 0.12 0" class="L_collision"/> 
+                <site name="tor_L_HAA" size="0.01" pos="0.00000 0.00000 0.00000" />
+
+                 <!-- LEFT UPPER LEG -->
+                <body name="L_UL" pos="0.17600 0.24900 0.00100">
+                    <inertial mass="5.7057" pos="0.02600 -0.07500 -0.23600" fullinertia="0.49120 0.46540 0.04310 0.00890 0.02870 -0.11260" />
+                    <joint name="left_hip_fe" axis="0 -1 0" range="-5 110" limited="true" class="hip_fe" />
+                    <geom name="L_UpperLeg" type="mesh" mesh="L_UpperLeg" />
+                    <geom name="L_UpperLeg_capsule" size="0.08 0.08 0.24" pos="0 -0.04 -0.235" class="L_collision"/> 
+                    <site name="tor_L_HFE" size="0.01" pos="0.00000 0.00000 0.00000" />
+                    <site name="L_UL_imu" size="0.01" pos="-0.0424275 0.0294287 -0.2288773" />
+                            
+                    <!-- LEFT LOWER LEG -->
+                    <body name="L_LL" pos="0.00200 -0.0600 -0.47200">
+                        <inertial mass="5.8116" pos="0.00300 -0.04600 -0.14500" fullinertia="0.21540 0.22000 0.03000 0.00140 -0.00290 -0.03550" />
+                        <joint name="left_knee" axis="0 1 0" range="0 125" limited="true" class="knee" />
+                        <geom name="L_LowerLeg" type="mesh" mesh="L_LowerLeg" />
+                        <geom name="L_LowerLeg_capsule" size="0.07 0.07 0.23" pos="0 -0.015 -0.23" class="L_collision"/> 
+                        <site name="tor_L_KFE" size="0.01" pos="0.00000 0.00000 0.00000" />
+                        <site name="L_LL_imu" size="0.01" pos="-0.0116665 -0.0191920 -0.1801739" /> 
+                        <!-- <geom type="sphere" size="0.01" pos="0 0 0.1" rgba="1 0 1 1"/> -->
+
+
+                        <!-- COUPLED LINEARS -->
+                        <body name="L_Front_Housing" pos="0.113 -0.092 -0.268">
+                            <inertial mass="0.5" pos="0 0 -0.07" diaginertia="0.002 0.002 0.0005"/> <!-- TODO: determine these values-->
+                            <joint name="L_Front_Hinge" type="hinge" axis="0 1 0" damping="0.01"/>
+            
+                            <geom type="cylinder" size="0.023" rgba="0.7 0.9 0.7 0.2" fromto="0 0 0 -0.022 0.0149 -0.149" />
+
+                            <body name="L_Front_Spindle" pos="-0.0084 0.0059 -0.0596">
+                                <inertial mass="0.05" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/><!-- TODO: determine these values-->
+                                <geom type="box" size="0.05 0.05 0.05" rgba="0.1 0.1 0.8 0.5"/>
+                                <joint name="L_Front_Motor" type="hinge" axis="0 0 1" limited="true" range="-7614 9666" class="ankle_linear" />
+                            </body>
+
+                            <body name="L_Front_Pushrod" pos="-0.0084 0.0059 -0.0596">
+                                <inertial mass="0.3" pos="-0.025 0 -0.11" diaginertia="0.002 0.002 0.0001"/> <!-- TODO: determine these values-->
+                                <joint name="L_Front_Slide" type="slide" axis="0 0 1" limited="true" range="-0.0423 0.0537" class="ankle_linear"/>
+                                
+                                <geom type="cylinder" size="0.015" rgba="0.3 0.8 0.3 1" fromto="0 0 0 -0.0316 0.0241 -0.2114"/>
+
+                                <site name="L_Front_Rod_Tip" pos="-0.0316 0.0241 -0.2114"/> 
+                            
+                            </body>
+                        </body>
+
+                        <body name="L_Back_Housing" pos="-0.105 -0.092 -0.245"> 
+                            <inertial mass="0.5" pos="0.0075 0 -0.07" diaginertia="0.002 0.002 0.0005"/> <!-- TODO: determine these values-->
+                            <joint name="L_Back_Hinge" type="hinge" axis="0 1 0" damping="0.01"/>
+                            
+                            <geom type="cylinder" size="0.023" rgba="0.9 0.7 0.7 0.2" fromto="0 0 0 0.04 0.0135 -0.147"/>
+
+                            <body name="L_Back_Spindle" pos="0.0151 0.0070 -0.0764">
+                                <inertial mass="0.05" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/><!-- TODO: determine these values-->
+                                <geom type="box" size="0.05 0.05 0.05" rgba="0.1 0.1 0.8 0.5"/>
+                                <joint name="L_Back_Motor" type="hinge" axis="0 0 1" limited="true" range="-10818 6462" class="ankle_linear" />
+                            </body>
+
+                            <body name="L_Back_Pushrod" pos="0.0151 0.0070 -0.0764">
+                                <inertial mass="0.3" pos="0.015 0 -0.125" diaginertia="0.002 0.002 0.0001"/> <!-- TODO: determine these values-->
+                                <joint name="L_Back_Slide" type="slide" axis="0 0 1" limited="true" range="-0.0601 0.0359" class="ankle_linear"/>
+                                
+                                <geom type="cylinder" size="0.015" rgba="0.8 0.3 0.3 1" fromto="0 0 0 0.0429 0.02 -0.2176"/>
+
+                                <site name="L_Back_Rod_Tip" pos="0.0429 0.02 -0.2176"/>                           
+            
+                            </body>
+                        </body>
+ 
+                        <!-- LEFT ANKLE -->
+                        <body name="L_ankle" pos="0.0000 -0.02500 -0.46800">
+                            <inertial mass="4.7638" pos=" 0.00400 -0.06000 -0.01800" fullinertia="0.00240 0.00260 0.00460 0.00010 -0.00000 -0.00060" />
+                            <joint name="left_ankle_dpf" axis="0 -1 0" range="-35 15" limited="true"/>
+                            <geom name="L_Ankle" type="mesh" mesh="L_Ankle" />
+                            <geom name="L_Ankle_capsule" size="0.07 0.06 0.04" pos="0 -0.06 -0.015" class="L_collision"/> 
+                            <site name="tor_L_ADPF" size="0.01" pos="0.00000 0.00000 0.00000" />
+                            <site name="tor_L_AIE" size="0.01" pos="-0.13100 -0.11400 -0.02600" />
+                            <site name="tor_L_ankle" size="0.01" pos="0.00000 0.00000 0.00000" />
+
+
+                            <!-- LEFT FOOT -->
+                            <body name="L_foot" pos="-0.13500 -0.1200 -0.02600">
+                                <inertial mass="1.2259" pos=" 0.16300 0.02400 -0.06000" fullinertia="0.04700 0.19090 0.17630 -0.01390 0.04760 -0.00130" />
+                                <joint name="left_ankle_ie" pos="-0.0 -0.0 -0.0" axis="1 0 0" range="-10 15" limited="true"/>
+                                <geom name="L_Foot" type="mesh" mesh="L_Sole" />
+
+                                <site name="L_Front_Foot_Anchor" pos="0.208 0.08 -0.045" size="0.01" rgba="0 1 0 1"/> 
+                                <site name="L_Back_Foot_Anchor"  pos="0.088 0.08 -0.045" size="0.01" rgba="1 0 0 1"/> 
+
+                                <!-- <geom type="sphere" size="0.01" pos="0.05 0.06 -0.075" rgba="1 0 1 1"/>
+                                <geom type="sphere" size="0.01" pos="0.208 0.08 -0.045" rgba="1 0 0 1"/>
+                                <geom type="sphere" size="0.01" pos="0.088 0.08 -0.045" rgba="1 0 0 1"/> -->
+                                
+                                <!-- Multi-point contact system for left foot -->
+                                <!-- Back-left corner -->
+                                <geom name="L_foot_contact_bl" rgba="0 0 1 0.5" pos="0.05000 -0.0600 -0.11900" class="foot_collision"/>
+                                
+                                <!-- Back-right corner -->
+                                <geom name="L_foot_contact_br" rgba="0 1 1 0.5" pos="0.05000 0.0600 -0.11900" class="foot_collision"/>
+                                
+                                <!-- Front-left corner -->
+                                <geom name="L_foot_contact_fl" pos="0.3600 -0.05500 -0.11000" class="foot_collision"/>
+                                                            
+                                <!-- Front-right corner -->
+                                <geom name="L_foot_contact_fr" pos="0.3600 0.05500 -0.11000" class="foot_collision"/>
+                                
+                                <!-- Mid-back-left -->
+                                <geom name="L_foot_contact_mbl" pos="0.22250 -0.06500 -0.11350" class="foot_collision"/>
+                                
+                                <!-- Mid-back-right -->
+                                <geom name="L_foot_contact_mbr" pos="0.22250 0.06500 -0.11350" class="foot_collision"/>
+                                
+                                <!-- Touch sensor sites -->
+                                <site name="sp0" pos="0.05000 -0.0600 -0.11900" type="sphere" size=".01" group="6" />
+                                <site name="sp1" pos="0.05000 0.0600 -0.11900" type="sphere" size=".01" group="6" />
+                                <site name="sp2" pos="0.3600 -0.05500 -0.11000" type="sphere" size=".01" group="6" />
+                                <site name="sp3" pos="0.3600 0.05500 -0.11000" type="sphere" size=".01" group="6" />
+
+                                <site name="tor_L_foot" pos="0.00000 0.00000 0.00000" size="0.01" rgba="1 0 0 0.5" />
+
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+            
+            <!-- RIGHT HIP -->
+            <body name="R_hip" pos="0.00400 -0.09200 -0.20000">
+                <inertial mass="2.0526" pos="0.12400 -0.17000 0.00700" fullinertia="0.11230 0.08360 0.18680 0.08410 -0.00300 0.00320" />
+                <joint name="right_hip_aa" axis="1 0 0" range="-20 10" limited="true" class="hip_aa" />
+                <geom name="R_Hip" type="mesh" mesh="R_Hip" />
+                <geom name="R_Hip_capsule" size="0.10 0.12 0.08" pos="0.08 -0.12 0" class="R_collision"/> 
+                <site name="tor_R_HAA" size="0.01" pos="0.00000 0.00000 0.00000" />
+
+                 <!-- RIGHT UPPER LEG -->
+                <body name="R_UL" pos="0.17600 -0.24900 0.00100">
+                    <inertial mass="5.7057" pos=" 0.01000 0.06600 -0.22600" fullinertia="0.46570 0.44360 0.03460 -0.00320 0.01130 0.09930" />
+                    <joint name="right_hip_fe" axis="0 -1 0" range="-5 110" limited="true" class="hip_fe" />
+                    <geom name="R_UpperLeg" type="mesh" mesh="R_UpperLeg" />
+                    <geom name="R_UpperLeg_capsule" size="0.08 0.08 0.24" pos="0 -0.04 -0.235" class="R_collision"/> 
+                    <site name="tor_R_HFE" size="0.01" pos="0.00000 0.00000 0.00000" />
+                    <site name="R_UL_imu" size="0.01" pos="0.035127 -0.0329461 -0.2269061" />
+                            
+                    <!-- RIGHT LOWER LEG -->
+                    <body name="R_LL" pos="0.00200 0.0600 -0.47200">
+                    <inertial mass="5.8116" pos=" 0.00800 0.03900 -0.14100" fullinertia="0.21540 0.22000 0.03000 -0.00140 -0.00290 0.03550" />
+                    <joint name="right_knee" axis="0 1 0" range="0 125" limited="true" class="knee" />
+                    <geom name="R_LowerLeg" type="mesh" mesh="R_LowerLeg" />
+                    <geom name="R_LowerLeg_capsule" size="0.07 0.07 0.23" pos="0 0.015 -0.23" class="R_collision"/>
+                    <site name="tor_R_KFE" size="0.01" pos="0.00000 0.00000 0.00000" />
+                    <site name="R_LL_imu" size="0.01" pos="0.0083911 -0.0238741 -0.1807056" />
+
+                        <!-- COUPLED LINEARS -->
+                        <body name="R_Front_Housing" pos="0.113 0.092 -0.268">
+                            <inertial mass="0.5" pos="0 0 -0.07" diaginertia="0.002 0.002 0.0005"/> <!-- TODO: determine these values-->
+                            <joint name="R_Front_Hinge" type="hinge" axis="0 1 0" damping="0.01"/>
+            
+                            <geom type="cylinder" size="0.023" rgba="0.7 0.9 0.7 0.2" fromto="0 0 0 -0.022 -0.0149 -0.149" />
+
+                            <body name="R_Front_Spindle" pos="-0.0084 0.0059 -0.0596">
+                                <inertial mass="0.05" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/><!-- TODO: determine these values-->
+                                <geom type="box" size="0.05 0.05 0.05" rgba="0.1 0.1 0.8 0.5"/>
+                                <joint name="R_Front_Motor" type="hinge" axis="0 0 1" limited="true" range="-7614 9666" class="ankle_linear" />
+                            </body>
+
+                            <body name="R_Front_Pushrod" pos="-0.0084 0.0059 -0.0596">
+                                <inertial mass="0.3" pos="-0.025 0 -0.11" diaginertia="0.002 0.002 0.0001"/> <!-- TODO: determine these values-->
+                                <joint name="R_Front_Slide" type="slide" axis="0 0 1" limited="true" range="-0.0423 0.537" class="ankle_linear"/>
+                                
+                                <geom type="cylinder" size="0.015" rgba="0.3 0.8 0.3 1" fromto="0 0 0 -0.0316 -0.0241 -0.2114"/>
+
+                                <site name="R_Front_Rod_Tip" pos="-0.0316 -0.0241 -0.2114"/> 
+
+                            </body>
+                        </body>
+
+                        <body name="R_Back_Housing" pos="-0.105 0.092 -0.245"> 
+                            <inertial mass="0.5" pos="0.0075 0 -0.07" diaginertia="0.002 0.002 0.0005"/> <!-- TODO: determine these values-->
+                            <joint name="R_Back_Hinge" type="hinge" axis="0 1 0" damping="0.01"/>
+                            
+                            <geom type="cylinder" size="0.023" rgba="0.9 0.7 0.7 0.2" fromto="0 0 0 0.04 -0.0135 -0.147"/>
+
+                            <body name="R_Back_Spindle" pos="0.0151 -0.0070 -0.0764">
+                                <inertial mass="0.05" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/><!-- TODO: determine these values-->
+                                <geom type="box" size="0.05 0.05 0.05" rgba="0.1 0.1 0.8 0.5"/>
+                                <joint name="R_Back_Motor" type="hinge" axis="0 0 1" limited="true" range="-10818 6462" class="ankle_linear" />
+                            </body>
+
+                            <body name="R_Back_Pushrod" pos="0.0151 -0.0070 -0.0764">
+                                <inertial mass="0.3" pos="0.015 0 -0.125" diaginertia="0.002 0.002 0.0001"/> <!-- TODO: determine these values-->
+                                <joint name="R_Back_Slide" type="slide" axis="0 0 1" limited="true" range="-0.0601 0.0359" class="ankle_linear"/>
+                                
+                                <geom type="cylinder" size="0.015" rgba="0.8 0.3 0.3 1" fromto="0 0 0 0.0429 -0.02 -0.2176"/>
+
+                                <site name="R_Back_Rod_Tip" pos="0.0429 -0.02 -0.2176"/> 
+                                
+                            </body>
+                        </body>
+ 
+                        <!-- RIGHT ANKLE -->
+                        <body name="R_ankle" pos="0.0000 0.02500 -0.46800">
+                            <inertial mass="4.7638" pos=" 0.00400 0.06000 -0.01800" fullinertia="0.00240 0.00270 0.00460 0.00010 0.00000 0.00060" />
+                            <joint name="right_ankle_dpf" axis="0 -1 0" range="-28 17" limited="true" />
+                            <geom name="R_Ankle" type="mesh" mesh="R_Ankle" />
+                            <geom name="R_Ankle_capsule" size="0.07 0.06 0.04" pos="0 0.06 -0.015" class="R_collision"/>
+                            <site name="tor_R_ADPF" size="0.01" pos="0.00000 0.00000 0.00000" />
+                            <site name="tor_R_AIE" size="0.01" pos="-0.13100 -0.11400 -0.02600" />
+                            <site name="tor_R_ankle" size="0.01" pos="0.00000 0.00000 0.00000" />
+
+                            <!-- RIGHT FOOT -->
+                            <body name="R_foot" pos="-0.13500 0.1200 -0.02600">
+                                <inertial mass="1.2259" pos=" 0.16700 -0.02600 -0.06100" fullinertia="0.04700 0.19280 0.17840 0.01520 0.04800 0.00080" />
+                                <joint name="right_ankle_ie" pos="-0.0 0.0 -0.0" axis="-1 0 0" range="-10 10"  limited="true"/> 
+                                <geom name="R_Foot" type="mesh" mesh="R_Sole" />
+
+                                <site name="R_Front_Foot_Anchor" pos="0.208 -0.08 -0.045" size="0.01" rgba="0 1 0 1"/> 
+                                <site name="R_Back_Foot_Anchor"  pos="0.088 -0.08 -0.045" size="0.01" rgba="1 0 0 1"/>
+                                
+                                <!-- Multi-point contact system for right foot -->
+                                <!-- Back-left corner -->
+                                <geom name="R_foot_contact_bl" pos="0.05000 -0.0600 -0.11900" class="foot_collision"/>
+                                
+                                <!-- Back-right corner -->
+                                <geom name="R_foot_contact_br" pos="0.05000 0.0600 -0.11900" class="foot_collision"/>
+
+                                <!-- Front-left corner -->
+                                <geom name="R_foot_contact_fl" pos="0.3600 -0.05500 -0.11000" class="foot_collision"/>
+
+                                <!-- Front-right corner -->
+                                <geom name="R_foot_contact_fr" pos="0.3600 0.05500 -0.11000" class="foot_collision"/>
+
+                                <!-- Mid-back-left -->
+                                <geom name="R_foot_contact_mbl" pos="0.22250 -0.06500 -0.11350" class="foot_collision"/>
+
+                                <!-- Mid-back-right -->
+                                <geom name="R_foot_contact_mbr" pos="0.22250 0.06500 -0.11350" class="foot_collision"/>
+ 
+                                <!-- Touch sensor sites -->
+                                <site name="sp4" pos="0.05000 -0.0600 -0.11900" type="sphere" size=".01" group="6" />
+                                <site name="sp5" pos="0.05000 0.0600 -0.11900" type="sphere" size=".01" group="6" />
+                                <site name="sp6" pos="0.3600 -0.05500 -0.11000" type="sphere" size=".01" group="6" />
+                                <site name="sp7" pos="0.3600 0.05500 -0.11000" type="sphere" size=".01" group="6" />
+                                
+                                <site name="tor_R_foot" pos="0.00000 0.00000 0.00000" size="0.01" rgba="1 0 0 0.5" />
+                                
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+        
+    </worldbody>
+
+    <actuator>
+        <motor name="left_hip_aa"       joint="left_hip_aa"   class="hip_aa"/>
+        <motor name="left_hip_fe"       joint="left_hip_fe"   class="hip_fe" />
+        <motor name="left_knee"         joint="left_knee"     class="knee" />
+
+        <motor name="right_hip_aa"      joint="right_hip_aa"  class="hip_aa" />
+        <motor name="right_hip_fe"      joint="right_hip_fe"  class="hip_fe" />
+        <motor name="right_knee"        joint="right_knee"    class="knee" />
+        
+        <motor name="L_Front_Linear"    joint="L_Front_Motor" class="ankle_linear"/>
+        <motor name="L_Back_Linear"     joint="L_Back_Motor"  class="ankle_linear"/>
+        <motor name="R_Front_Linear"    joint="R_Front_Motor" class="ankle_linear"/>
+        <motor name="R_Back_Linear"     joint="R_Back_Motor"  class="ankle_linear"/>
+        <!-- <motor name="L_Front_Slide"    joint="L_Front_Slide" class="ankle_linear"/> -->
+        <!-- <motor name="L_Back_Slide"     joint="L_Back_Slide"  class="ankle_linear"/> -->
+        <!-- <motor name="R_Front_Slide"    joint="R_Front_Slide" class="ankle_linear"/> -->
+        <!-- <motor name="R_Back_Slide"     joint="R_Back_Slide"  class="ankle_linear"/> -->
+    </actuator>
+
+    <equality>
+        <joint name="L_Front_rot_to_slide" joint1="L_Front_Slide" joint2="L_Front_Motor"
+            polycoef="0 0.00031831" solref="0.01 2" solimp="0.9 0.95 0.001"/>
+
+        <joint name="L_Back_rot_to_slide" joint1="L_Back_Slide" joint2="L_Back_Motor"
+            polycoef="0 0.00031831" solref="0.01 2" solimp="0.9 0.95 0.001"/>
+
+        <joint name="R_Front_rot_to_slide" joint1="R_Front_Slide" joint2="R_Front_Motor"
+            polycoef="0 0.00031831" solref="0.01 2" solimp="0.9 0.95 0.001"/>
+
+        <joint name="R_Back_rot_to_slide" joint1="R_Back_Slide" joint2="R_Back_Motor"
+            polycoef="0 0.00031831" solref="0.01 2" solimp="0.9 0.95 0.001"/>
+        
+        <connect name="L_Link_Front" site1="L_Front_Foot_Anchor" site2="L_Front_Rod_Tip" solref="0.0001 1"/>
+        <connect name="L_Link_Back"  site1="L_Back_Foot_Anchor"  site2="L_Back_Rod_Tip" solref="0.0001 1"/>
+
+        <connect name="R_Link_Front" site1="R_Front_Foot_Anchor" site2="R_Front_Rod_Tip" solref="0.0001 1"/>
+        <connect name="R_Link_Back"  site1="R_Back_Foot_Anchor"  site2="R_Back_Rod_Tip" solref="0.0001 1"/>
+    </equality>
+
+    <sensor>
+        <jointpos name="L_AIE_pos_output"  joint="left_ankle_ie"   user="18" noise="000" />
+        <jointpos name="L_ADPF_pos_output" joint="left_ankle_dpf"  user="18" noise="000" />
+        <jointpos name="L_HAA_pos_output"  joint="left_hip_aa"     user="18" noise="000" />
+        <jointpos name="L_HFE_pos_output"  joint="left_hip_fe"     user="18" noise="000" />
+        <jointpos name="L_KFE_pos_output"  joint="left_knee"       user="18" noise="000" />
+        <jointpos name="R_AIE_pos_output"  joint="right_ankle_ie"  user="18" noise="000" />
+        <jointpos name="R_ADPF_pos_output" joint="right_ankle_dpf" user="18" noise="000" />
+        <jointpos name="R_HAA_pos_output"  joint="right_hip_aa"   user="18" noise="000" />
+        <jointpos name="R_HFE_pos_output"  joint="right_hip_fe"   user="18" noise="000" />
+        <jointpos name="R_KFE_pos_output"  joint="right_knee"     user="18" noise="000" />
+
+        <jointvel name="L_AIE_vel_output"  joint="left_ankle_ie"   user="18" noise="000" />
+        <jointvel name="L_ADPF_vel_output" joint="left_ankle_dpf"  user="18" noise="000" />
+        <jointvel name="L_HAA_vel_output"  joint="left_hip_aa"     user="18" noise="000" />
+        <jointvel name="L_HFE_vel_output"  joint="left_hip_fe"     user="18" noise="000" />
+        <jointvel name="L_KFE_vel_output"  joint="left_knee"       user="18" noise="000" />
+        <jointvel name="R_AIE_vel_output"  joint="right_ankle_ie"  user="18" noise="000" />
+        <jointvel name="R_ADPF_vel_output" joint="right_ankle_dpf" user="18" noise="000" />
+        <jointvel name="R_HAA_vel_output"  joint="right_hip_aa"    user="18" noise="000" />
+        <jointvel name="R_HFE_vel_output"  joint="right_hip_fe"    user="18" noise="000" />
+        <jointvel name="R_KFE_vel_output"  joint="right_knee"      user="18" noise="000" />
+
+        <torque name="L_AIE_tor_output"  site="tor_L_AIE"  user="13" noise="000" />
+        <torque name="L_ADPF_tor_output" site="tor_L_ADPF" user="13" noise="000" />
+        <torque name="L_HAA_tor_output"  site="tor_L_HAA"  user="13" noise="000" />
+        <torque name="L_HFE_tor_output"  site="tor_L_HFE"  user="13" noise="000" />
+        <torque name="L_KFE_tor_output"  site="tor_L_KFE"  user="13" noise="000" />
+        <torque name="R_AIE_tor_output"  site="tor_R_AIE"  user="13" noise="000" />
+        <torque name="R_ADPF_tor_output" site="tor_R_ADPF" user="13" noise="000" />
+        <torque name="R_HAA_tor_output"  site="tor_R_HAA"  user="13" noise="000" />
+        <torque name="R_HFE_tor_output"  site="tor_R_HFE"  user="13" noise="000" />
+        <torque name="R_KFE_tor_output"  site="tor_R_KFE"  user="13" noise="000" />
+
+        <!-- User sensors not supported by MJX -->
+        <!-- Pressure soles -->
+        <touch name="left_back_R_pressure"   site="sp0"/>
+        <touch name="left_back_L_pressure"   site="sp1"/>
+        <touch name="left_front_R_pressure"  site="sp2"/>
+        <touch name="left_front_L_pressure"  site="sp3"/>
+        <touch name="right_back_L_pressure"  site="sp4"/>
+        <touch name="right_back_R_pressure"  site="sp5"/>
+        <touch name="right_front_L_pressure" site="sp6"/>
+        <touch name="right_front_R_pressure" site="sp7"/> 
+
+         <!-- IMU sensors -->
+        <framepos name="trace0" objtype="body" objname="backpack"/> 
+        <frameangvel name="torso_angvel" objtype="body" objname="backpack"/>
+        <framepos name="torso_position" objtype="body" objname="backpack"/>
+        <subtreelinvel name="torso_subtreelinvel" body="backpack"/>
+        <framepos name="backpack_imu_position" objtype="body" objname="backpack"/>
+        <subtreecom name="torso_subtreecom" body="backpack"/>
+
+        <!-- Noise & cutoff must be determined -->
+        <framequat name='backpack_orientation' objtype='site' objname='imu_backpack'/>
+        <gyro name='vel_imu_backpack' site='imu_backpack' noise='5e-4' cutoff='34.9'/>
+        <accelerometer name='acc_imu_backpack' site='imu_backpack' noise='1e-5' cutoff='157'/>
+        
+        <framequat name='L_UL_orientation' objtype='site' objname='L_UL_imu'/> 
+        <gyro name='vel_L_UL_imu' site='L_UL_imu' noise='5e-4' cutoff='34.9'/>
+        <accelerometer name='acc_L_UL_imu' site='L_UL_imu' noise='1e-5' cutoff='157'/>
+        
+        <framequat name='L_LL_orientation' objtype='site' objname='L_LL_imu'/>
+        <gyro name='vel_L_LL_imu' site='L_LL_imu' noise='5e-4' cutoff='34.9'/>
+        <accelerometer name='acc_L_LL_imu' site='L_LL_imu' noise='1e-5' cutoff='157'/>
+        
+        <framequat name="R_UL_orientation" objtype="site" objname="R_UL_imu"/>
+        <gyro name="vel_R_UL_imu" site="R_UL_imu" noise="5e-4" cutoff="34.9"/>
+        <accelerometer name="acc_R_UL_imu" site="R_UL_imu" noise="1e-5" cutoff="157"/>
+        
+        <framequat name="R_LL_orientation" objtype="site" objname="R_LL_imu"/>
+        <gyro name="vel_R_LL_imu" site="R_LL_imu" noise="5e-4" cutoff="34.9"/>
+        <accelerometer name="acc_R_LL_imu" site="R_LL_imu" noise="1e-5" cutoff="157"/>
+    </sensor>
+
+    <!-- HOME POSITION
+    0-6: Free joint, 
+    7: left_hip_aa, 8: left_hip_fe, 9: left_knee, 10: left_ankle_dpf, 11: left_ankle_ie, 
+    12: right_hip_aa, 13: right_hip_fe, 14: right_knee, 15: right_ankle_dpf, 16: right_ankle_ie -->
+    <!-- <keyframe><key name='home' 
+        qpos='-0.0754 0.157 0.316 0.182 -0.0754 
+            -0.0754 0.157 0.316 0.182 -0.0754'/>
+    </keyframe>  -->
+    <!-- <keyframe><key name='home' 
+        qpos='0 0 1.03 0.9990482 0 0.0436194 0
+            -0.0754 0.157 0.316 0.182 -0.0754 
+            -0.0754 0.157 0.316 0.182 -0.0754'/>
+    </keyframe> -->
+    
+</mujoco>
