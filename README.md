@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# mjx_system_identification_marchxi
-=======
 # Mujoco System Identification
 A framework for system identification using the **MJX differentiable simulator**.
 
@@ -58,4 +55,19 @@ pip install -e .
 - [Result Validation](examples/result_simulation.ipynb)
     - Validate optimized parameters using a modified model.xml file.
     - Generate a video showcasing model performance.
->>>>>>> 94e46e7 (idk tbh)
+
+---
+
+## Exo Model (Quick Use)
+This repo includes example scripts and notebooks to identify parameters for an exoskeleton model.
+
+1. **Provide an exo model XML**
+   - Use [exo optimisation/exo.xml](exo%20optimisation/exo.xml) or your own MuJoCo XML.
+2. **Record data as an MCAP file**
+   - You need a real experiment recording in `.mcap` format (ROS 2 bag).
+3. **Convert MCAP to CSV**
+   - Run [exo optimisation/convert_rosbag_to_csv.py](exo%20optimisation/convert_rosbag_to_csv.py) to produce a CSV dataset.
+4. **Run optimization**
+   - Open [exo optimisation/optimization.ipynb](exo%20optimisation/optimization.ipynb) or [exo optimisation/optimization_arm_damp.ipynb](exo%20optimisation/optimization_arm_damp.ipynb) and update the dataset path and model path.
+5. **Validate results**
+   - Not working yet
