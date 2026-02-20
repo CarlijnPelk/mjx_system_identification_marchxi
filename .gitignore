@@ -7,3 +7,9 @@ build
 *.mp4
 *generated*
 *.joblib
+
+# Large data files
+*.mcap
+*.csv
+exo optimisation/data/
+examples/minipi_sys_id/assets/exo/dataset/
