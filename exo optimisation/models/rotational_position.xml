@@ -1,0 +1,55 @@
+<mujoco model="rotational">
+  <!-- added manually -->
+  <compiler meshdir="obj-files" angle="radian" autolimits="true"/>
+  <option timestep="0.02" iterations="5" ls_iterations="10" integrator="implicitfast" gravity="0 0 -9.81">
+    <flag contact="disable" eulerdamp="disable" />
+  </option>
+
+  <default>
+    <default class="rotational_joint">
+      <joint damping="1.7" armature="0.000100" frictionloss="0.15" stiffness="0"/>
+    </default>
+  </default>
+
+<!-- Added delay to simulate undirect input->output -->
+  <actuator>
+    <!-- <motor gear="100" name="rotational_joint_actuator" ctrllimited="true" ctrlrange="-1.0 1.0" delay="0.02" nsample="1" joint="right_knee"/> -->
+    <position name="position_actuator" gear="1" kp="9.6" kv="0.4" joint="right_knee"/>
+  </actuator>
+<!-- <actuator>
+    <velocity name="velocity_actuator" gear="1" kv="0.4" joint="right_knee"/>
+</actuator> -->
+<!--
+  <actuator>
+    <position name="right_knee" gear="1" ctrlrange="0 2.18166" ctrllimited="true" kp="300" dampratio="1" timeconst="0" joint="right_knee" />
+  </actuator> -->
+  <!-- <sensor>
+    <actuatorfrc name="moment_output" actuator="rotational_joint_actuator"/>
+  </sensor>    -->
+  <asset>
+    <mesh name="R_LowerLeg"  scale="-1 1 1"     file="L_LowerLeg.obj"/>
+  </asset>
+
+  <worldbody>
+    <body name="base" pos="0 0 1.5" quat="1 0 0 0">
+      <inertial pos="0 0 0" mass="2" diaginertia="0.00072 0.00072 0.00072"/>
+      <geom name="base_visual" size="0.05 0.05 0.05" pos="0 0 0" type="box" />
+      <body name="rotational" pos="0 0 0">
+        <inertial mass="4.973" pos="0 0 0" fullinertia="0.21540 0.22000 0.03000 0.00140 -0.00290 -0.03550" />
+        <!-- <inertial mass="0.01" pos="0 0 0" fullinertia="0.01 0.01 0.01 0.01 -0.01 -0.01" /> -->
+
+        <!-- <joint name="right_knee" axis="0 1 0" range="0 2.18166" limited="true" class="rotational_joint" /> -->
+        <joint name="right_knee" axis="0 1 0" class="rotational_joint" />
+
+        <geom name="R_LowerLeg" type="mesh" mesh="R_LowerLeg" contype="0" conaffinity="0" />
+        <site name="tip" pos="0 0 -1"/>
+        <site name="moment_sensor" pos="0 0 0"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <framepos name="tracking_site" objtype="site" objname="tip"/>
+  </sensor>
+  <equality/>
+</mujoco>

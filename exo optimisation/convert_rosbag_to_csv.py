@@ -22,12 +22,14 @@ from mcap_ros2.decoder import DecoderFactory
 import sys
 
 # ========== CONFIGURATION ==========
-INPUT_MCAP = "exo optimisation/data/raw/2025-11-26-11-26-comp.mcap"  # Change this to your MCAP file path
-OUTPUT_CSV = "exo optimisation/data/2025-11-26-11-26-comp.csv"  # Output CSV file
+INPUT_MCAP = "exo optimisation/data/raw/2026-02-17-15-41-59_0_fix_comp.mcap"  # Change this to your MCAP file path
+OUTPUT_CSV = "exo optimisation/data/2026-02-17-15-41-59_0_fix_comp_2.csv"  # Output CSV file
 JOINT_STATES_TOPIC = '/joint_states'
 PDO_TOPIC = '/pdo_states'
-START_TIME = 60  # Start time in seconds (relative to bag start), or None
-END_TIME = None    # End time in seconds (relative to bag start), or None
+START_TIME = 25  # Start time in seconds (relative to bag start), or None
+END_TIME = 95    # End time in seconds (relative to bag start), or None
+# Only process these topics when set (keeps conversion faster)
+TOPICS_TO_KEEP = [JOINT_STATES_TOPIC, PDO_TOPIC]
 # ===================================
 
 # Joint names in the order needed for optimization
@@ -98,6 +100,8 @@ def convert_mcap_to_csv(mcap_path, output_csv, joint_states_topic='/joint_states
     bag_start_time = None
     topics_found = set()
     
+    topics_to_keep = set(TOPICS_TO_KEEP) if TOPICS_TO_KEEP else None
+
     print("Scanning bag for topics...")
     with open(mcap_path, 'rb') as f:
         reader = make_reader(f)
@@ -132,6 +136,8 @@ def convert_mcap_to_csv(mcap_path, output_csv, joint_states_topic='/joint_states
         reader = make_reader(f, decoder_factories=[DecoderFactory()])
         
         for schema, channel, message, ros_msg in reader.iter_decoded_messages():
+            if topics_to_keep and channel.topic not in topics_to_keep:
+                continue
             timestamp = message.log_time / 1e9  # Convert nanoseconds to seconds
             
             # Skip messages outside time range

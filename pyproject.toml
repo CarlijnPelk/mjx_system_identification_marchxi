@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sysidmjx"
+version = "0.0.0"
+description = "MJX-based system identification utilities"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sysidmjx*"]
